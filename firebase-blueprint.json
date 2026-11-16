@@ -1,0 +1,239 @@
+{
+  "entities": {
+    "Task": {
+      "title": "Task",
+      "description": "An illustration evaluation task tracked by a remote illustrator.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique task document ID",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "ownerId": {
+          "type": "string",
+          "description": "Firebase Auth UID of the task owner",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "code": {
+          "type": "string",
+          "description": "Short human-readable task code (e.g. KR-1001)",
+          "maxLength": 60
+        },
+        "title": {
+          "type": "string",
+          "description": "Task prompt or illustration title",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "batchName": {
+          "type": "string",
+          "description": "Batch identifier from labeling platform",
+          "minLength": 1,
+          "maxLength": 100
+        },
+        "difficulty": {
+          "type": "string",
+          "description": "Task difficulty tier",
+          "enum": ["Easy", "Medium", "Hard"]
+        },
+        "status": {
+          "type": "string",
+          "description": "Current lifecycle stage",
+          "enum": [
+            "Available",
+            "Skipped",
+            "In Progress",
+            "Submitted",
+            "In QA",
+            "Revision",
+            "Reviewed"
+          ]
+        },
+        "timeSpentMinutes": {
+          "type": "number",
+          "description": "Total logged minutes worked on the task"
+        },
+        "notes": {
+          "type": "string",
+          "description": "Illustrator notes and instructions",
+          "maxLength": 2000
+        },
+        "revisionCount": {
+          "type": "number",
+          "description": "Count of human QA revisions requested"
+        },
+        "isPaid": {
+          "type": "boolean",
+          "description": "Whether the reviewed task has been marked as paid"
+        },
+        "paidAt": {
+          "type": "string",
+          "description": "ISO timestamp when task was marked as paid",
+          "maxLength": 64
+        },
+        "clientRevision": {
+          "type": "boolean",
+          "description": "Whether the task was returned from Paid to Worksheet with Client Revision status"
+        },
+        "driveSubfolderId": {
+          "type": "string",
+          "description": "Google Drive folder ID created for this task",
+          "maxLength": 128
+        },
+        "driveSubfolderName": {
+          "type": "string",
+          "description": "Google Drive subfolder name (batch_difficulty_code)",
+          "maxLength": 250
+        },
+        "driveSubfolderLink": {
+          "type": "string",
+          "description": "Google Drive webViewLink for the task subfolder",
+          "maxLength": 500
+        }
+      },
+      "required": [
+        "id",
+        "ownerId",
+        "code",
+        "title",
+        "batchName",
+        "difficulty",
+        "status",
+        "timeSpentMinutes",
+        "notes",
+        "revisionCount"
+      ]
+    },
+    "WorksheetCell": {
+      "title": "WorksheetCell",
+      "description": "Daily minutes logged for a specific task on a specific date.",
+      "type": "object",
+      "properties": {
+        "ownerId": {
+          "type": "string",
+          "description": "Firebase Auth UID of the owner",
+          "maxLength": 128
+        },
+        "taskId": {
+          "type": "string",
+          "description": "ID of the associated task",
+          "maxLength": 128
+        },
+        "date": {
+          "type": "string",
+          "description": "Date string YYYY-MM-DD",
+          "maxLength": 16
+        },
+        "minutes": {
+          "type": "number",
+          "description": "Minutes worked on that date"
+        }
+      },
+      "required": ["ownerId", "taskId", "date", "minutes"]
+    },
+    "DailyNote": {
+      "title": "DailyNote",
+      "description": "Daily studio session log note for a date.",
+      "type": "object",
+      "properties": {
+        "ownerId": {
+          "type": "string",
+          "description": "Firebase Auth UID of the owner",
+          "maxLength": 128
+        },
+        "date": {
+          "type": "string",
+          "description": "Date string YYYY-MM-DD",
+          "maxLength": 16
+        },
+        "note": {
+          "type": "string",
+          "description": "Daily log note content",
+          "maxLength": 2000
+        }
+      },
+      "required": ["ownerId", "date", "note"]
+    },
+    "UserSettings": {
+      "title": "UserSettings",
+      "description": "Illustrator studio preferences and Google Drive folder settings.",
+      "type": "object",
+      "properties": {
+        "ownerId": {
+          "type": "string",
+          "description": "Firebase Auth UID of the owner",
+          "maxLength": 128
+        },
+        "illustratorName": {
+          "type": "string",
+          "description": "Display name of the illustrator",
+          "maxLength": 80
+        },
+        "passThreshold": {
+          "type": "number",
+          "description": "Minimum Human QA score required to pass"
+        },
+        "weeklyHourTarget": {
+          "type": "number",
+          "description": "Target hours per week"
+        },
+        "variationCount": {
+          "type": "number",
+          "description": "Number of variations per task"
+        },
+        "theme": {
+          "type": "string",
+          "enum": ["light", "dark"]
+        },
+        "gdriveFolderId": {
+          "type": "string",
+          "maxLength": 128
+        },
+        "gdriveFolderUrl": {
+          "type": "string",
+          "maxLength": 500
+        },
+        "gdrivePrefixMode": {
+          "type": "string",
+          "enum": ["id_title", "id_only", "title_only"]
+        },
+        "autoUploadToGDrive": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "ownerId",
+        "illustratorName",
+        "passThreshold",
+        "weeklyHourTarget",
+        "variationCount",
+        "theme",
+        "gdriveFolderId",
+        "gdriveFolderUrl",
+        "gdrivePrefixMode",
+        "autoUploadToGDrive"
+      ]
+    }
+  },
+  "firestore": {
+    "/users/{userId}/tasks/{taskId}": {
+      "schema": { "$ref": "#/entities/Task" },
+      "description": "User's private illustration evaluation tasks"
+    },
+    "/users/{userId}/worksheetCells/{cellId}": {
+      "schema": { "$ref": "#/entities/WorksheetCell" },
+      "description": "User's private daily timesheet cells"
+    },
+    "/users/{userId}/dailyNotes/{dateId}": {
+      "schema": { "$ref": "#/entities/DailyNote" },
+      "description": "User's private daily studio notes"
+    },
+    "/users/{userId}/settings/{settingId}": {
+      "schema": { "$ref": "#/entities/UserSettings" },
+      "description": "User's private workspace and Google Drive configuration"
+    }
+  }
+}

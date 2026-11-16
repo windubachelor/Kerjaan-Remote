@@ -1,0 +1,176 @@
+@import "tailwindcss";
+@custom-variant dark (&:where(.dark, .dark *));
+
+:root {
+  /* Base stationery & editorial ops palette (Light Mode First) */
+  --background: #FAF8F5;
+  --foreground: #26231F;
+  --surface: #FFFFFF;
+  --surface-muted: #F3EFE9;
+  --border: #E7E1D8;
+  --border-strong: #D5CDBE;
+  --ink: #26231F;
+  --muted-text: #7A736A;
+
+  /* Pastel accents & high-contrast semantic text pairs (WCAG AA >= 4.5:1) */
+  --sage: #CFE3D4;
+  --sage-ink: #1E4629;
+  --sage-border: #B3D2BC;
+
+  --peach: #F7D9C4;
+  --peach-ink: #693310;
+  --peach-border: #EBC0A2;
+
+  --lavender: #DAD3F0;
+  --lavender-ink: #372963;
+  --lavender-border: #C4B9E6;
+
+  --sky: #CFE2F3;
+  --sky-ink: #1B4266;
+  --sky-border: #B3D0EA;
+
+  --butter: #F6EBB8;
+  --butter-ink: #5C4805;
+  --butter-border: #E6D78F;
+
+  --rose: #F4CFD6;
+  --rose-ink: #6B1D2F;
+  --rose-border: #E6B3BD;
+
+  /* Shadcn semantic mappings */
+  --card: #FFFFFF;
+  --card-foreground: #26231F;
+  --popover: #FFFFFF;
+  --popover-foreground: #26231F;
+  --primary: #26231F;
+  --primary-foreground: #FAF8F5;
+  --secondary: #F3EFE9;
+  --secondary-foreground: #26231F;
+  --muted: #F3EFE9;
+  --muted-foreground: #7A736A;
+  --accent: #F3EFE9;
+  --accent-foreground: #26231F;
+  --destructive: #6B1D2F;
+  --destructive-foreground: #FAF8F5;
+  --ring: #26231F;
+
+  /* Radius system: 8px controls, 12px cards */
+  --radius-control: 8px;
+  --radius-card: 12px;
+}
+
+.dark {
+  --background: #141311;
+  --foreground: #EDE9E2;
+  --surface: #1C1A17;
+  --surface-muted: #25221E;
+  --border: #2E2A25;
+  --border-strong: #3E3932;
+  --ink: #EDE9E2;
+  --muted-text: #9E968B;
+
+  /* Desaturated pastel tints adapted for dark surfaces */
+  --sage: #1E3526;
+  --sage-ink: #B8DEC2;
+  --sage-border: #2C4D37;
+
+  --peach: #3B2416;
+  --peach-ink: #F5C7A9;
+  --peach-border: #543420;
+
+  --lavender: #28223D;
+  --lavender-ink: #D4CBF2;
+  --lavender-border: #3B3259;
+
+  --sky: #1A2D3D;
+  --sky-ink: #BBD8F2;
+  --sky-border: #264259;
+
+  --butter: #362E12;
+  --butter-ink: #F2E29B;
+  --butter-border: #4F431B;
+
+  --rose: #3B1D24;
+  --rose-ink: #F2BAC5;
+  --rose-border: #572B35;
+
+  --card: #1C1A17;
+  --card-foreground: #EDE9E2;
+  --popover: #1C1A17;
+  --popover-foreground: #EDE9E2;
+  --primary: #EDE9E2;
+  --primary-foreground: #141311;
+  --secondary: #25221E;
+  --secondary-foreground: #EDE9E2;
+  --muted: #25221E;
+  --muted-foreground: #9E968B;
+  --accent: #25221E;
+  --accent-foreground: #EDE9E2;
+  --destructive: #F2BAC5;
+  --destructive-foreground: #3B1D24;
+  --ring: #EDE9E2;
+}
+
+@layer base {
+  * {
+    border-color: var(--border);
+  }
+
+  body {
+    background-color: var(--background);
+    color: var(--ink);
+    font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+    font-size: 14px;
+    line-height: 1.5;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  }
+
+  h1, h2, h3, h4, .font-display {
+    font-family: 'Bricolage Grotesque', -apple-system, BlinkMacSystemFont, sans-serif;
+    letter-spacing: -0.02em;
+  }
+
+  .font-mono, .tabular-nums {
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+/* Bold, modern, sharp Lucide icon enforcement across the entire app */
+svg.lucide {
+  stroke-width: 2.4px !important;
+  stroke-linecap: square;
+  stroke-linejoin: round;
+}
+
+/* Custom utility classes for the stationery design language */
+.font-display {
+  font-family: 'Bricolage Grotesque', sans-serif;
+}
+
+.font-sans-ui {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+}
+
+.font-mono-num {
+  font-family: 'JetBrains Mono', monospace;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Subtle custom scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border-strong);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--muted-text);
+}

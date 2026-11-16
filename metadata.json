@@ -1,0 +1,6 @@
+{
+  "name": "TaskLedger",
+  "description": "Personal work-management system for freelance senior illustrators tracking AI evaluation tasks, 7-variation workflows, QA review loops, and weekly timesheets.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

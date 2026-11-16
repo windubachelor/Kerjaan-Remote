@@ -1,0 +1,189 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Pillar 0: Global Safety Net (Default Deny)
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Hardened Global Helpers
+    function isSignedIn() {
+      return request.auth != null && request.auth.token.email_verified == true;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    // Validation Blueprint: Task
+    function isValidTask(data) {
+      return data.keys().hasAll([
+          'id', 'ownerId', 'code', 'title', 'batchName', 'difficulty', 'status',
+          'timeSpentMinutes', 'notes', 'variations', 'qaLLM', 'qaHuman',
+          'revisionCount', 'revisionTags', 'revisionHistory', 'history', 'updatedAt'
+        ]) &&
+        data.keys().hasOnly([
+          'id', 'ownerId', 'code', 'title', 'batchName', 'difficulty', 'status',
+          'timeSpentMinutes', 'notes', 'variations', 'qaLLM', 'qaHuman',
+          'revisionCount', 'revisionTags', 'revisionHistory', 'history', 'updatedAt',
+          'claimedAt', 'submittedAt', 'reviewedAt', 'deadline', 'latestFeedback',
+          'driveSubfolderId', 'driveSubfolderName', 'driveSubfolderLink', 'externalLink',
+          'isPaid', 'paidAt', 'clientRevision'
+        ]) &&
+        data.ownerId is string && data.ownerId.size() >= 1 && data.ownerId.size() <= 128 &&
+        data.ownerId == request.auth.uid &&
+        data.id is string && data.id.size() >= 1 && data.id.size() <= 128 && data.id.matches('^[a-zA-Z0-9_\\-]+$') &&
+        data.code is string && data.code.size() >= 1 && data.code.size() <= 60 &&
+        data.title is string && data.title.size() >= 1 && data.title.size() <= 200 &&
+        data.batchName is string && data.batchName.size() >= 1 && data.batchName.size() <= 100 &&
+        data.difficulty is string && data.difficulty.size() <= 20 && data.difficulty in ['Easy', 'Medium', 'Hard'] &&
+        data.status is string && data.status.size() <= 30 &&
+        data.status in ['Available', 'Skipped', 'In Progress', 'Submitted', 'In QA', 'Revision', 'Reviewed'] &&
+        (data.timeSpentMinutes is int || data.timeSpentMinutes is float) &&
+        data.timeSpentMinutes >= 0 && data.timeSpentMinutes <= 100000 &&
+        data.notes is string && data.notes.size() <= 2000 &&
+        data.variations is list && data.variations.size() <= 16 &&
+        (data.variations.size() == 0 || data.variations[0] is map) &&
+        (data.qaLLM == null || ((data.qaLLM is int || data.qaLLM is float) && data.qaLLM >= 1.0 && data.qaLLM <= 5.0)) &&
+        (data.qaHuman == null || ((data.qaHuman is int || data.qaHuman is float) && data.qaHuman >= 1.0 && data.qaHuman <= 5.0)) &&
+        data.revisionCount is int && data.revisionCount >= 0 && data.revisionCount <= 500 &&
+        data.revisionTags is list && data.revisionTags.size() <= 15 &&
+        (data.revisionTags.size() == 0 || (data.revisionTags[0] is string && data.revisionTags[0].size() <= 80)) &&
+        data.revisionHistory is list && data.revisionHistory.size() <= 100 &&
+        (data.revisionHistory.size() == 0 || data.revisionHistory[0] is map) &&
+        data.history is list && data.history.size() <= 200 &&
+        (data.history.size() == 0 || data.history[0] is map) &&
+        data.updatedAt is string && data.updatedAt.size() <= 64 &&
+        (!('claimedAt' in data) || (data.claimedAt is string && data.claimedAt.size() <= 64)) &&
+        (!('submittedAt' in data) || (data.submittedAt is string && data.submittedAt.size() <= 64)) &&
+        (!('reviewedAt' in data) || (data.reviewedAt is string && data.reviewedAt.size() <= 64)) &&
+        (!('deadline' in data) || (data.deadline is string && data.deadline.size() <= 64)) &&
+        (!('latestFeedback' in data) || (data.latestFeedback is string && data.latestFeedback.size() <= 2000)) &&
+        (!('driveSubfolderId' in data) || (data.driveSubfolderId is string && data.driveSubfolderId.size() <= 128)) &&
+        (!('driveSubfolderName' in data) || (data.driveSubfolderName is string && data.driveSubfolderName.size() <= 250)) &&
+        (!('driveSubfolderLink' in data) || (data.driveSubfolderLink is string && data.driveSubfolderLink.size() <= 500)) &&
+        (!('externalLink' in data) || (data.externalLink is string && data.externalLink.size() <= 500)) &&
+        (!('isPaid' in data) || data.isPaid is bool) &&
+        (!('paidAt' in data) || (data.paidAt is string && data.paidAt.size() <= 64)) &&
+        (!('clientRevision' in data) || data.clientRevision is bool);
+    }
+
+    // Validation Blueprint: WorksheetCell
+    function isValidWorksheetCell(data) {
+      return data.keys().hasAll(['ownerId', 'taskId', 'date', 'minutes', 'updatedAt']) &&
+        data.keys().hasOnly(['ownerId', 'taskId', 'date', 'minutes', 'updatedAt']) &&
+        data.ownerId is string && data.ownerId.size() <= 128 && data.ownerId == request.auth.uid &&
+        data.taskId is string && data.taskId.size() >= 1 && data.taskId.size() <= 128 &&
+        data.date is string && data.date.size() >= 8 && data.date.size() <= 16 &&
+        (data.minutes is int || data.minutes is float) && data.minutes >= 0 && data.minutes <= 1440 &&
+        data.updatedAt is string && data.updatedAt.size() <= 64;
+    }
+
+    // Validation Blueprint: DailyNote
+    function isValidDailyNote(data) {
+      return data.keys().hasAll(['ownerId', 'date', 'note', 'updatedAt']) &&
+        data.keys().hasOnly(['ownerId', 'date', 'note', 'updatedAt']) &&
+        data.ownerId is string && data.ownerId.size() <= 128 && data.ownerId == request.auth.uid &&
+        data.date is string && data.date.size() >= 8 && data.date.size() <= 16 &&
+        data.note is string && data.note.size() <= 2000 &&
+        data.updatedAt is string && data.updatedAt.size() <= 64;
+    }
+
+    // Validation Blueprint: UserSettings
+    function isValidUserSettings(data) {
+      return data.keys().hasAll([
+          'ownerId', 'illustratorName', 'passThreshold', 'rates',
+          'weeklyHourTarget', 'variationCount', 'theme',
+          'gdriveFolderId', 'gdriveFolderUrl', 'gdrivePrefixMode',
+          'autoUploadToGDrive', 'updatedAt'
+        ]) &&
+        data.keys().hasOnly([
+          'ownerId', 'illustratorName', 'passThreshold', 'rates',
+          'weeklyHourTarget', 'variationCount', 'theme',
+          'gdriveFolderId', 'gdriveFolderUrl', 'gdrivePrefixMode',
+          'autoUploadToGDrive', 'updatedAt'
+        ]) &&
+        data.ownerId is string && data.ownerId.size() <= 128 && data.ownerId == request.auth.uid &&
+        data.illustratorName is string && data.illustratorName.size() >= 1 && data.illustratorName.size() <= 80 &&
+        (data.passThreshold is int || data.passThreshold is float) && data.passThreshold >= 1.0 && data.passThreshold <= 5.0 &&
+        data.rates is map &&
+        (data.weeklyHourTarget is int || data.weeklyHourTarget is float) && data.weeklyHourTarget >= 1 && data.weeklyHourTarget <= 120 &&
+        data.variationCount is int && data.variationCount >= 1 && data.variationCount <= 14 &&
+        data.theme is string && data.theme.size() <= 10 && data.theme in ['light', 'dark'] &&
+        data.gdriveFolderId is string && data.gdriveFolderId.size() <= 128 &&
+        data.gdriveFolderUrl is string && data.gdriveFolderUrl.size() <= 500 &&
+        data.gdrivePrefixMode is string && data.gdrivePrefixMode.size() <= 20 &&
+        data.gdrivePrefixMode in ['id_title', 'id_only', 'title_only'] &&
+        data.autoUploadToGDrive is bool &&
+        data.updatedAt is string && data.updatedAt.size() <= 64;
+    }
+
+    // User Tasks Collection
+    match /users/{userId}/tasks/{taskId} {
+      allow get: if isOwner(userId) && isValidId(userId) && isValidId(taskId) && (resource == null || existing().ownerId == request.auth.uid);
+      allow list: if isOwner(userId) && existing().ownerId == request.auth.uid;
+      allow create: if isOwner(userId) && isValidId(userId) && isValidId(taskId) && isValidTask(incoming()) && incoming().id == taskId;
+      allow update: if isOwner(userId) && isValidId(userId) && isValidId(taskId) && isValidTask(incoming()) &&
+        incoming().ownerId == existing().ownerId &&
+        incoming().id == existing().id &&
+        incoming().diff(existing()).affectedKeys().hasOnly([
+          'code', 'title', 'batchName', 'difficulty', 'status',
+          'timeSpentMinutes', 'notes', 'variations', 'qaLLM', 'qaHuman',
+          'revisionCount', 'revisionTags', 'revisionHistory', 'history', 'updatedAt',
+          'claimedAt', 'submittedAt', 'reviewedAt', 'deadline', 'latestFeedback',
+          'driveSubfolderId', 'driveSubfolderName', 'driveSubfolderLink', 'externalLink',
+          'isPaid', 'paidAt', 'clientRevision'
+        ]);
+      allow delete: if isOwner(userId) && isValidId(userId) && isValidId(taskId) && existing().ownerId == request.auth.uid;
+    }
+
+    // User Worksheet Cells Collection
+    match /users/{userId}/worksheetCells/{cellId} {
+      allow get: if isOwner(userId) && isValidId(userId) && isValidId(cellId) && (resource == null || existing().ownerId == request.auth.uid);
+      allow list: if isOwner(userId) && existing().ownerId == request.auth.uid;
+      allow create: if isOwner(userId) && isValidId(userId) && isValidId(cellId) && isValidWorksheetCell(incoming());
+      allow update: if isOwner(userId) && isValidId(userId) && isValidId(cellId) && isValidWorksheetCell(incoming()) &&
+        incoming().ownerId == existing().ownerId &&
+        incoming().diff(existing()).affectedKeys().hasOnly(['minutes', 'updatedAt', 'taskId', 'date']);
+      allow delete: if isOwner(userId) && isValidId(userId) && isValidId(cellId) && existing().ownerId == request.auth.uid;
+    }
+
+    // User Daily Notes Collection
+    match /users/{userId}/dailyNotes/{dateId} {
+      allow get: if isOwner(userId) && isValidId(userId) && isValidId(dateId) && (resource == null || existing().ownerId == request.auth.uid);
+      allow list: if isOwner(userId) && existing().ownerId == request.auth.uid;
+      allow create: if isOwner(userId) && isValidId(userId) && isValidId(dateId) && isValidDailyNote(incoming());
+      allow update: if isOwner(userId) && isValidId(userId) && isValidId(dateId) && isValidDailyNote(incoming()) &&
+        incoming().ownerId == existing().ownerId &&
+        incoming().diff(existing()).affectedKeys().hasOnly(['note', 'updatedAt', 'date']);
+      allow delete: if isOwner(userId) && isValidId(userId) && isValidId(dateId) && existing().ownerId == request.auth.uid;
+    }
+
+    // User Settings Collection
+    match /users/{userId}/settings/{settingId} {
+      allow get: if isOwner(userId) && isValidId(userId) && isValidId(settingId) && (resource == null || existing().ownerId == request.auth.uid);
+      allow list: if isOwner(userId) && existing().ownerId == request.auth.uid;
+      allow create: if isOwner(userId) && isValidId(userId) && isValidId(settingId) && isValidUserSettings(incoming());
+      allow update: if isOwner(userId) && isValidId(userId) && isValidId(settingId) && isValidUserSettings(incoming()) &&
+        incoming().ownerId == existing().ownerId &&
+        incoming().diff(existing()).affectedKeys().hasOnly([
+          'illustratorName', 'passThreshold', 'rates', 'weeklyHourTarget',
+          'variationCount', 'theme', 'gdriveFolderId', 'gdriveFolderUrl',
+          'gdrivePrefixMode', 'autoUploadToGDrive', 'updatedAt'
+        ]);
+      allow delete: if isOwner(userId) && isValidId(userId) && isValidId(settingId) && existing().ownerId == request.auth.uid;
+    }
+  }
+}
